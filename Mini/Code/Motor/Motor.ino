@@ -1,58 +1,84 @@
-#define trigPin 12
-#define echoPin 11
+#define fw1Pin 2
+#define fw2Pin 3
+#define bk1Pin 4
+#define bk2Pin 5
 #define dirPin 10
-#define MOTOR_FRONT1 2
-#define MOTOR_FRONT2 3
-#define MOTOR_BACK1 4
-#define MOTOR_BACK2 5
+#define trgPin 12
+#define ecoPin 11 
+
+long duration;
+long distance;
+
 void setup() {
-  Serial.begin (9600);
-  pinMode(trigPin, OUTPUT);
-  pinMode(echoPin, INPUT);
-  pinMode(MOTOR_FRONT1, OUTPUT);
-  pinMode(MOTOR_FRONT2, OUTPUT);
-  pinMode(MOTOR_BACK1, OUTPUT);
-  pinMode(MOTOR_BACK2, OUTPUT);
+  Serial.begin(115200);
+  pinMode(fw1Pin, OUTPUT);
+  pinMode(fw2Pin, OUTPUT);
+  pinMode(bk1Pin, OUTPUT);
+  pinMode(bk2Pin, OUTPUT);
   pinMode(dirPin, OUTPUT);
+  pinMode(trgPin, OUTPUT);
+  pinMode(ecoPin, INPUT);
 }
 
 void loop() {
-  long duration, distance;
-  digitalWrite(trigPin, LOW);  // Added this line
-  delayMicroseconds(2); // Added this line
-  digitalWrite(trigPin, HIGH);
-  delayMicroseconds(10); // Added this line
-  digitalWrite(trigPin, LOW);
-  duration = pulseIn(echoPin, HIGH);
-  distance = (duration/2) / 29.1;
-  if (distance < 30) {  
-    Serial.println("MOTOR BACK"); 
-    back();
-  }else {
-    Serial.println("MOTOR FRONT");
-    front();    
+  Serial.println("Starting engine...");
+  delay(1000);
+  while (true) {
+    // -- Evita que os motores estejam a trabalhar quando liga os ultrasons
+    // -- por tentar garantir alguma estabilidade elétrica 
+    stop();
+    // -- Ativa os ultrasons para detetar obstaculos 
+    digitalWrite(trgPin, LOW); 
+    delayMicroseconds(2);
+    digitalWrite(trgPin, HIGH);
+    delayMicroseconds(100);
+    digitalWrite(trgPin, LOW);
+    duration = pulseIn(ecoPin, HIGH);
+    distance = (duration/2)/29.1;
+    Serial.println(distance);
+    if (distance < 30) {
+      back();
+    } else {
+      forward();
+      // -- Dá algum tempo ao motor para avançar
+      delay(100);
+    }
   }
- Serial.print(distance);
- Serial.println(" cm");
- delay(10);
 }
 
-void front(){
-  digitalWrite(MOTOR_BACK1,LOW);  
-  digitalWrite(MOTOR_BACK2,LOW);  
+void forward() {
+  Serial.println("Forward");
+  
+  digitalWrite(bk1Pin, LOW);
+  digitalWrite(bk2Pin, LOW);
 
-  digitalWrite(MOTOR_FRONT1,HIGH);
-  digitalWrite(MOTOR_FRONT2,HIGH);
+  digitalWrite(fw1Pin, HIGH);
+  digitalWrite(fw2Pin, HIGH);
 }
 
-void back(){
-  digitalWrite(MOTOR_FRONT1,LOW);
-  digitalWrite(MOTOR_FRONT2,LOW);
+void back() {
+  Serial.println("Back");
+  
+  digitalWrite(fw1Pin, LOW);
+  digitalWrite(fw2Pin, LOW);
 
-  digitalWrite(MOTOR_BACK1,HIGH);  
-  digitalWrite(MOTOR_BACK2,HIGH);
-
+  digitalWrite(bk1Pin, HIGH);
+  digitalWrite(bk2Pin, HIGH);
+  
   digitalWrite(dirPin, LOW);
-  delay(500);
+  delay(1500);
   digitalWrite(dirPin, HIGH);
 }
+
+void stop() {
+  Serial.println("Stop");
+  
+  digitalWrite(fw1Pin, LOW);
+  digitalWrite(fw2Pin, LOW);
+
+  digitalWrite(bk1Pin, LOW);
+  digitalWrite(bk2Pin, LOW);
+  
+  digitalWrite(dirPin, HIGH);
+}
+
